@@ -1,0 +1,2 @@
+Directory to store the SQLite database file.
+Managed and updated by Alembic migrations.
