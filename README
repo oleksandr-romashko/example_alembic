@@ -1,0 +1,25 @@
+# Example Alembic Project
+
+This project demonstrates a minimal setup of SQLAlchemy 2.0 with Alembic migrations and SQLite.
+
+## 📦 Features
+
+- ✅ SQLAlchemy 2.0+ (async/modern API)
+- ✅ Alembic for database schema migrations
+- ✅ SQLite as a simple local database
+- ✅ Poetry for dependency and environment management
+
+## 📂 Project Structure
+
+- `models.py` — defines ORM models.
+- `db.py` — sets up the database engine and session.
+- `main.py` — main entry point (could be CLI, test runner, etc).
+- `migrations/` — Alembic migration scripts.
+- `data/` — holds the SQLite database file (empty except for `.gitkeep`).
+
+## 🛠️ Setup
+
+### 1. Install dependencies
+
+```bash
+poetry install
