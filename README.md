@@ -8,7 +8,10 @@ It's a simple, self-contained TODOs / notes app that features:
 - ✅ A tagging system (multiple tags per note)
 - ✅ JSON output for filtered results
 
-> ⚠️ **Note**: This is not a complete app or a full-featured CLI. It's meant to demonstrate how to set up and manage database versioning with Alembic and SQLAlchemy.
+> ⚠️ **Note**: 
+> This is not a complete app or a full-featured CLI app.
+> This project is meant for learning purposes and can be extended into a full app.
+> It's meant to demonstrate how to set up and manage database versioning with Alembic and SQLAlchemy.
 
 ---
 
@@ -45,7 +48,7 @@ This is a great starting point if you're:
 - [models.py](./src/models.py) — defines ORM models (`Note`, `Record`, `Tag`).
 - [connect.py](./src/connect.py) — DB connection and session setup.
 - [migrations/](./migrations/) — Alembic migration scripts directory.
-- [data/](./data/) — Directory to hold the SQLite database file (empty except for `.gitkeep`).
+- [data/](./data/) — Directory to hold the SQLite database file (empty except for `.gitkeep` to keep the `data/` directory in Git).
 - [seeds.py](./src/seeds.py) — Seeds the DB with initial data.
 - [main.py](./src/main.py) — Queries notes with the query to retrieve data.
 
@@ -75,20 +78,19 @@ poetry run python ./src/seeds.py
 
 This will add sample data to the to database tables.
 
+> **Note**: To rerun `seeds.py`, you'll need to delete `data/mynotes.db` file and initialize the database (previous step) again.
+
 ## ▶️ Run the App
 
 ### 1. Run the sample query
+
+> **Note**: Make sure your database file exists under `data/` before querying using `main.py`.
 
 ```bash
 poetry run python ./src/main.py
 ```
 
-## 📝 Notes
-
-* `.gitkeep` is used to keep the `data/` directory in Git, though the actual database file is `.gitignored`.
-* Make sure your database file exists under `data/` before querying using `main.py`.
-* To rerun `seeds.py`, you'll need to clear the DB or add duplicate handling.
-* This project is meant for learning purposes and can be extended into a full app.
+This will show current notes data, filtered by "food" and "cooking" tags and shown in JSON format for easy reading.
 
 ## ⚙️ Requirements
 
