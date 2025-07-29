@@ -10,7 +10,7 @@ if __name__ == "__main__":
     notes = (
         session.query(Note)
         .options(joinedload(Note.tags), joinedload(Note.records))
-        .order_by(Note.id, Record.id)
+        .order_by(Note.id)
         .filter(Note.tags.any(Tag.name.in_(filtered_tags)))
         .all()
     )
