@@ -69,7 +69,7 @@ This will install all necessary project dependencies.
 poetry run alembic upgrade head
 ```
 
-This will create the SQLite database inside the `data/` directory and apply all currently available migrations (let's call this initial state as revision 0).
+This will create the SQLite database `mynotes.db` inside the `data/` directory and apply all currently available migrations (this will bring your database to revision 0, representing the initial schema version used in this project).
 
 Current database structure is based on provided ORM models located in `src/models.py`.
 
@@ -97,14 +97,16 @@ poetry run python ./src/main-revision-0.py
 
 This will show current notes data, filtered by "food" and "cooking" tags and displayed in JSON format for easier reading.
 
-<details> <summary>Click to expand and see easy to read JSON output</summary>
+<details> <summary>Click to expand and see easy to read JSON-like output</summary>
 
-```json
+```bash
+✅ Showing notes related to tags: food, cooking
+[
   {
     "note_id": 1,
     "title": "Buy ingredients for supper",
-    "created_at": "2025-07-29T18:14:19",
-    "updated_at": "2025-07-29T18:14:19",
+    "created_at": "2025-07-30T14:35:15",
+    "updated_at": "2025-07-30T14:35:15",
     "tags": [
       "food",
       "groceries"
@@ -131,8 +133,8 @@ This will show current notes data, filtered by "food" and "cooking" tags and dis
   {
     "note_id": 2,
     "title": "Cook supper: Chicken with potatoes",
-    "created_at": "2025-07-29T18:14:19",
-    "updated_at": "2025-07-29T18:14:19",
+    "created_at": "2025-07-30T14:35:15",
+    "updated_at": "2025-07-30T14:35:15",
     "tags": [
       "cooking",
       "dinner"
@@ -179,9 +181,9 @@ The following shows database versioning in case of any changes to ORM models.
 
     ![ER-Diagram-revision-1](./assets/uml/ER-Diagram-revision-1.jpg)
 
-    <details> <summary>Click to expand and see easy to read JSON representation</summary>
+    <details> <summary>Click to expand and see easy to read JSON-like output</summary>
 
-    ```json
+    ```bash
     ...
     ```
     </details>
