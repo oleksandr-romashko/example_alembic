@@ -1,17 +1,17 @@
 # 🧪 SQLAlchemy + Alembic Example Project (with SQLite) <!-- omit in toc -->
 
-This project demonstrates a minimal setup using **SQLAlchemy 2.0**, **Alembic** for migrations, and **SQLite** as the database.
+This project demonstrates a minimal setup using **SQLAlchemy 2.0**, **Alembic** for schema migrations, and **SQLite** as the database engine.
 
-It's a simple, self-contained TODOs / notes app that features:
+It serves as a guided example for learning how to manage ORM-based database versioning. The schema is based on a simple TODO/notes system with:
 
-- ✅ TODOs / Notes with multiple records (like steps or tasks)
-- ✅ A tagging system (multiple tags per note)
-- ✅ JSON output for filtered results
+* Notes with multiple records (like steps or tasks)
+* A flexible tagging system (multiple tags per note)
+* JSON output for clear results
 
-> ⚠️ **Note**: 
-> This is not a complete app or a full-featured CLI app.
-> This project is meant for learning purposes and can be extended into a full app.
-> It's meant to demonstrate how to set up and manage database versioning with Alembic and SQLAlchemy.
+> ⚠️ **Note**
+> This is not a full-featured application or CLI tool.
+> It's a learning-oriented project designed to help you understand and practice Alembic migrations with SQLAlchemy. It's meant to demonstrate how to set up and manage database versioning with Alembic and SQLAlchemy.
+> You can use it as a base to build and experiment with more advanced setups.
 
 ---
 
