@@ -50,7 +50,8 @@ This is a great starting point if you're:
 - [migrations/](./migrations/) — Alembic migration scripts directory.
 - [data/](./data/) — Directory to hold the SQLite database file (empty except for `.gitkeep` to keep the `data/` directory in Git).
 - [seeds.py](./src/seeds.py) — Seeds the DB with initial data.
-- [main.py](./src/main.py) — Queries notes with the query to retrieve data.
+- [main-revision-0.py](./src/main-revision-0.py) — Queries notes with the query to retrieve seeded data (db schema revision 0 - initial).
+- [main-revision-1.py](./src/main-revision-1.py) — Queries notes with the query to retrieve seeded data (db schema revision 1 - added note description and record order).
 
 ## 🛠️ Setup
 
@@ -68,7 +69,13 @@ This will install all necessary project dependencies.
 poetry run alembic upgrade head
 ```
 
-This will create the SQLite database inside the `data/` directory and apply all migrations.
+This will create the SQLite database inside the `data/` directory and apply all currently available migrations (let's call this initial state as revision 0).
+
+Current database structure is based on provided ORM models located in `src/models.py`.
+
+Initial revision database schema:
+
+![ER-Diagram-initial-revision](./assets/uml/ER-Diagram-initial-revision.jpg)
 
 ### 3. Seed the database
 
@@ -76,21 +83,161 @@ This will create the SQLite database inside the `data/` directory and apply all 
 poetry run python ./src/seeds.py
 ```
 
-This will add sample data to the to database tables.
+This will add sample data to the database tables.
 
 > **Note**: To rerun `seeds.py`, you'll need to delete `data/mynotes.db` file and initialize the database (previous step) again.
 
-## ▶️ Run the App
+### 4. Run the sample query to test if everything is working
 
-### 1. Run the sample query
-
-> **Note**: Make sure your database file exists under `data/` before querying using `main.py`.
+> **Note**: Make sure your database file exists under `data/` before querying using `main-revision-0.py`.
 
 ```bash
-poetry run python ./src/main.py
+poetry run python ./src/main-revision-0.py
 ```
 
-This will show current notes data, filtered by "food" and "cooking" tags and shown in JSON format for easy reading.
+This will show current notes data, filtered by "food" and "cooking" tags and displayed in JSON format for easier reading.
+
+<details> <summary>Click to expand and see easy to read JSON output</summary>
+
+```json
+  {
+    "note_id": 1,
+    "title": "Buy ingredients for supper",
+    "created_at": "2025-07-29T18:14:19",
+    "updated_at": "2025-07-29T18:14:19",
+    "tags": [
+      "food",
+      "groceries"
+    ],
+    "records": [
+      {
+        "description": "Buy chicken breast, 500g",
+        "is_done": false
+      },
+      {
+        "description": "Buy potatoes, 1kg",
+        "is_done": false
+      },
+      {
+        "description": "Buy garlic and parsley",
+        "is_done": false
+      },
+      {
+        "description": "Buy sour cream",
+        "is_done": false
+      }
+    ]
+  },
+  {
+    "note_id": 2,
+    "title": "Cook supper: Chicken with potatoes",
+    "created_at": "2025-07-29T18:14:19",
+    "updated_at": "2025-07-29T18:14:19",
+    "tags": [
+      "cooking",
+      "dinner"
+    ],
+    "records": [
+      {
+        "description": "Clean and slice the potatoes, 1kg",
+        "is_done": false
+      },
+      {
+        "description": "Season the chicken breast (500g) and fry lightly",
+        "is_done": false
+      },
+      {
+        "description": "Bake everything together for 60 minutes at 180°C",
+        "is_done": false
+      },
+      {
+        "description": "Garnish with parsley and serve",
+        "is_done": false
+      }
+    ]
+  }
+]
+```
+</details>
+
+## 📘 Schema Change & Revision Walkthrough
+
+This guide will walk you through a staged database evolution process using Alembic. You'll start with a minimal schema and later upgrade it via revision-based migrations.
+
+The following shows database versioning in case of any changes to ORM models.
+
+1. **Step 1: Modify the models**
+
+    > ℹ️ If you want to continue evolving the schema, you can introduce your own changes to the ORM models after and follow the same revision process starting from this point.
+
+    Some changes have already been made to the models to demonstrate this step:
+
+    - Added `description` field to `Note` - adds broader text description to a note
+    - Added `order` field to `Record` - helps to prioritize records, mark them as completed, etc.
+
+    First revision database schema:
+
+    ![ER-Diagram-revision-1](./assets/uml/ER-Diagram-revision-1.jpg)
+
+    <details> <summary>Click to expand and see easy to read JSON representation</summary>
+
+    ```json
+    ...
+    ```
+    </details>
+
+2. **Step 2: Generate a new revision**
+
+    ```bash
+    poetry run alembic revision --autogenerate -m "Your message"
+    ```
+
+    > **Note**:
+    > Add your own message after `-m`, describing what has been changed after previous revision.
+
+    This creates a new file in `migrations/versions/`.
+    
+    This step only generates a migration script. The database structure itself is not changed until you apply the migration.
+
+3. **Step 3: Apply the migration**
+    
+    ```bash
+    poetry run alembic upgrade head
+    ```
+
+    This applies the suggested changes and updates the database structure.
+
+4. **Step 4: Update seeding and querying (optional)**
+
+    Now that the database structure has changed, you may want to update your seeding and querying logic to reflect these changes.
+
+5. **Run the sample query to test if everything is working**
+
+```bash
+poetry run python ./src/main-revision-1.py
+```
+
+This will show current notes data, filtered by "food" and "cooking" tags and displayed in JSON format for easier reading.
+
+
+## ↩️ Reverting changes
+
+If something went wrong, to roll back the last change:
+
+```bash
+poetry run alembic downgrade -1
+```
+
+This will revert database schema, but seeded data (unless removed manually) will stay.
+
+> ℹ️ This rolls back just the *last* applied migration.
+> You can chain this with multiple `-1` steps or use full revision identifiers as needed.
+
+
+> ⚠️ **Caution**:
+> Downgrading may lead to data loss — for example, if you added a new column and inserted data into it, the column (and its data) will be removed.
+> If necessary, please consider making backups before any risky changes.
+
 
 ## ⚙️ Requirements
 
@@ -98,6 +245,6 @@ This will show current notes data, filtered by "food" and "cooking" tags and sho
 * [Poetry](https://python-poetry.org/) (tested on 2.1.3)
 * [Alembic](https://alembic.sqlalchemy.org/en/latest/) (tested on 1.16)
 
-## 📄 Licence
+## 📄 License
 
 [MIT License](./LICENSE) · Happy hacking!
