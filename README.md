@@ -1,4 +1,4 @@
-# 🧪 Example Alembic Project
+# 🧪 SQLAlchemy + Alembic Example Project (with SQLite) <!-- omit in toc -->
 
 This project demonstrates a minimal setup using **SQLAlchemy 2.0**, **Alembic** for migrations, and **SQLite** as the database.
 
@@ -14,6 +14,29 @@ It's a simple, self-contained TODOs / notes app that features:
 > It's meant to demonstrate how to set up and manage database versioning with Alembic and SQLAlchemy.
 
 ---
+
+## 📚 Table of Contents <!-- omit in toc -->
+
+- [🎯 Purpose](#-purpose)
+- [📦 Features](#-features)
+- [📂 Project Structure](#-project-structure)
+- [🛠️ Setup](#️-setup)
+  - [1. Install dependencies](#1-install-dependencies)
+  - [2. Initialize the database and run migrations](#2-initialize-the-database-and-run-migrations)
+  - [3. Seed the database](#3-seed-the-database)
+  - [4. Run the sample query to test if everything is working](#4-run-the-sample-query-to-test-if-everything-is-working)
+- [📘 Schema Change \& Revision Walkthrough](#-schema-change--revision-walkthrough)
+  - [1. Step 1: Modify the models](#1-step-1-modify-the-models)
+  - [2. Step 2: Generate a new revision](#2-step-2-generate-a-new-revision)
+  - [3. Step 3: Apply the migration](#3-step-3-apply-the-migration)
+  - [4. Step 4: Run the sample query to test if everything worked out](#4-step-4-run-the-sample-query-to-test-if-everything-worked-out)
+  - [🧭 Inspecting database revision state](#-inspecting-database-revision-state)
+    - [🔍 See current revision](#-see-current-revision)
+    - [📜 See revision history](#-see-revision-history)
+  - [↩️ Reverting changes](#️-reverting-changes)
+- [⚙️ Requirements](#️-requirements)
+- [📄 License](#-license)
+
 
 ## 🎯 Purpose
 
@@ -50,8 +73,8 @@ This is a great starting point if you're:
 - [migrations/](./migrations/) — Alembic migration scripts directory.
 - [data/](./data/) — Directory to hold the SQLite database file (empty except for `.gitkeep` to keep the `data/` directory in Git).
 - [seeds.py](./src/seeds.py) — Seeds the DB with initial data.
-- [main-revision-0.py](./src/main-revision-0.py) — Queries notes with the query to retrieve seeded data (db schema revision 0 - initial).
-- [main-revision-1.py](./src/main-revision-1.py) — Queries notes with the query to retrieve seeded data (db schema revision 1 - added note description and record order).
+- [query-revision-0.py](./src/query-revision-0.py) — Queries notes with the query to retrieve seeded data (db schema revision 0 - initial).
+- [query-revision-1.py](./src/query-revision-1.py) — Queries notes with the query to retrieve seeded data (db schema revision 1 - added note description and record order).
 
 ## 🛠️ Setup
 
@@ -89,10 +112,10 @@ This will add sample data to the database tables.
 
 ### 4. Run the sample query to test if everything is working
 
-> **Note**: Make sure your database file exists under `data/` before querying using `main-revision-0.py`.
+> **Note**: Make sure your database file exists under `data/` before querying using `query-revision-0.py`.
 
 ```bash
-poetry run python ./src/main-revision-0.py
+poetry run python ./src/query-revision-0.py
 ```
 
 This will show current notes data, filtered by "food" and "cooking" tags and displayed in JSON format for easier reading.
@@ -168,63 +191,145 @@ This guide will walk you through a staged database evolution process using Alemb
 
 The following shows database versioning in case of any changes to ORM models.
 
-1. **Step 1: Modify the models**
+### 1. Step 1: Modify the models
 
-    > ℹ️ If you want to continue evolving the schema, you can introduce your own changes to the ORM models after and follow the same revision process starting from this point.
+  > ℹ️ After completing these demo steps, you can continue practicing database schema evolution by introducing your own changes to the ORM models and following the same revision process shown below.
 
-    Some changes have already been made to the models to demonstrate this step:
+  To demonstrate how Alembic tracks database revisions, we'll now extend the schema by introducing two new fields in the `models.py` file:
 
-    - Added `description` field to `Note` - adds broader text description to a note
-    - Added `order` field to `Record` - helps to prioritize records, mark them as completed, etc.
+  - `Note.description` — adds a longer text field to describe the note.
+  - `Record.order` — allows prioritizing or sorting records within a note.
 
-    First revision database schema:
+  These fields are already present in the code but commented out for this demo. To enable them, uncomment the following lines in `models.py`:
 
-    ![ER-Diagram-revision-1](./assets/uml/ER-Diagram-revision-1.jpg)
+  ```python
+  class Record(Base):
+      ...
+      # order: Mapped[int] = mapped_column(
+      #     nullable=False, default=-1, server_default=text("-1")
+      # )
+      ...
 
-    <details> <summary>Click to expand and see easy to read JSON-like output</summary>
+  class Note(Base):
+      ...
+      # description: Mapped[str] = mapped_column(
+      #     nullable=False, default="", server_default=text("''")
+      # )
+      ...
+  ```
 
-    ```bash
+  Your updated schema should now look like this:
+
+  ![ER-Diagram-revision-1](./assets/uml/ER-Diagram-revision-1.jpg)
+
+  > ⚠️  **Important**:
+  > At this point, your ORM model structure no longer matches the actual database schema — the new fields exist in the Python code but **not yet** in the database.
+  Any code that attempts to access these fields (like `query-revision-0.py`) will raise errors until you apply the migration in the next steps.
+  > 
+  > This is expected. You'll fix it by generating and applying a migration shortly.
+
+### 2. Step 2: Generate a new revision
+
+  Now that you've updated the models, it's time to generate a migration script that captures the changes you've made.
+
+  Run the following command:
+
+  ```bash
+  poetry run alembic revision --autogenerate -m "Add description to Note and order to Record"
+  ```
+
+  > **Note**:  
+  > If you make your own changes to the models in future, update the message after `-m` accordingly — it should describe the changes made since the previous revision.
+
+  This will create a new migration file in the `migrations/versions/` directory.
+
+  > ⚠️ This step only *generates* the migration script.  
+  > The actual database structure will not change until you **apply** the migration in the next step.
+
+### 3. Step 3: Apply the migration
+
+  Now that you've generated the migration script, it's time to apply it and update the actual database schema.
+
+  Run the following command:
+      
+  ```bash
+  poetry run alembic upgrade head
+  ```
+
+  This will apply the latest migration and bring your database schema in sync with the updated models.
+
+  >ℹ️ You can re-run this command any time to ensure the database is up to date with the latest revision.
+
+### 4. Step 4: Run the sample query to test if everything worked out
+
+  Now that the migration has been applied, let's run the sample script to verify that your updated database schema is working as expected.
+
+  Run the following command:
+
+  ```bash
+  poetry run python ./src/query-revision-1.py
+  ```
+
+  This will fetch and display the current notes data, now including the newly added `description` and `order` fields.
+
+  ✅ If you see the new fields without any errors, the migration was successful!
+
+  <details> <summary>Click to expand and see easy to read JSON-like output</summary>
+
+  ```bash
+  ✅ Showing notes related to tags: food, cooking
+  [
+    {
+      "note_id": 1,
+      "title": "Buy ingredients for supper",
+      "description": "",      // ← NEW FIELD
+      ...
+      "records": [
+        {
+          "description": "Buy chicken breast, 500g",
+          "is_done": false,
+          "order": -1      // ← NEW FIELD
+        },
+        ...
+      ]
+    },
     ...
-    ```
-    </details>
+  ]
+  ```
+  </details>
 
-2. **Step 2: Generate a new revision**
+  > 🧪 Want to keep practicing?
+  > Go back to Step 1 and try introducing your own changes to the database schema to see how Alembic tracks and applies revisions.
 
-    ```bash
-    poetry run alembic revision --autogenerate -m "Your message"
-    ```
+### 🧭 Inspecting database revision state
 
-    > **Note**:
-    > Add your own message after `-m`, describing what has been changed after previous revision.
+After running a migration, you might want to inspect the current state of your database or view the full revision history. Alembic provides handy commands for this.
 
-    This creates a new file in `migrations/versions/`.
-    
-    This step only generates a migration script. The database structure itself is not changed until you apply the migration.
+#### 🔍 See current revision
 
-3. **Step 3: Apply the migration**
-    
-    ```bash
-    poetry run alembic upgrade head
-    ```
-
-    This applies the suggested changes and updates the database structure.
-
-4. **Step 4: Update seeding and querying (optional)**
-
-    Now that the database structure has changed, you may want to update your seeding and querying logic to reflect these changes.
-
-5. **Run the sample query to test if everything is working**
+Check which migration is currently applied to your database:
 
 ```bash
-poetry run python ./src/main-revision-1.py
+poetry run alembic current
 ```
 
-This will show current notes data, filtered by "food" and "cooking" tags and displayed in JSON format for easier reading.
+This shows the current revision ID that your database is at.
 
+#### 📜 See revision history
 
-## ↩️ Reverting changes
+List all available migrations and their order:
 
-If something went wrong, to roll back the last change:
+```bash
+poetry run alembic history
+```
+
+This helps you understand the full chain of revisions and where your current state fits in.
+
+> ℹ️ These commands are especially helpful when debugging version mismatches or when working in a team to verify everyone's database is in sync.
+
+### ↩️ Reverting changes
+
+If something went wrong or you want to undo the latest schema changes, you can roll back the last migration:
 
 ```bash
 poetry run alembic downgrade -1
@@ -237,9 +342,8 @@ This will revert database schema, but seeded data (unless removed manually) will
 
 
 > ⚠️ **Caution**:
-> Downgrading may lead to data loss — for example, if you added a new column and inserted data into it, the column (and its data) will be removed.
-> If necessary, please consider making backups before any risky changes.
-
+> Downgrading can lead to **data loss** — for example, if you added a column and inserted values, both the column and the data will be dropped.
+> Consider backing up your database before running a downgrade in production or critical environments.
 
 ## ⚙️ Requirements
 
